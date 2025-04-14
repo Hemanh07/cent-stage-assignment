@@ -1,0 +1,13 @@
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    cursor: move;
+    transition: opacity 0.2s;
+}
+
+.task-item.dragging {
+    opacity: 0.5;
+}

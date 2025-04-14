@@ -1,0 +1,795 @@
+/* // Project: Advanced Task Planner (React + Redux + Vite + Pure CSS)
+
+// File: src/components/TaskList.jsx
+import React from 'react';
+
+import {
+  DragDropContext,
+  Droppable,
+  Draggable
+}
+
+from 'react-beautiful-dnd';
+
+import {
+  useSelector,
+  useDispatch
+}
+
+from 'react-redux';
+
+import {
+  reorderTasks
+}
+
+from '../redux/slices/tasksSlice';
+import '../styles/TaskList.css';
+
+const TaskList=()=> {
+  const tasks=useSelector((state)=> state.tasks.items);
+  const dispatch=useDispatch();
+
+  const onDragEnd=(result)=> {
+    if ( !result.destination) return;
+    const reordered=Array.from(tasks);
+    const [moved]=reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, moved);
+    dispatch(reorderTasks(reordered));
+  }
+
+  ;
+
+  return (<div className="task-list-container" > <h2 className="task-list-title" >Tasks</h2> <DragDropContext onDragEnd= {
+      onDragEnd
+    }
+
+    > <Droppable droppableId="tasks" > {
+      (provided)=> (<ul {
+          ...provided.droppableProps
+        }
+
+        ref= {
+          provided.innerRef
+        }
+
+        className="task-list" > {
+          tasks.map((task, index)=> (<Draggable key= {
+                task.id
+              }
+
+              draggableId= {
+                task.id
+              }
+
+              index= {
+                index
+              }
+
+              > {
+                (provided)=> (<li ref= {
+                    provided.innerRef
+                  }
+
+                    {
+                    ...provided.draggableProps
+                  }
+
+                    {
+                    ...provided.dragHandleProps
+                  }
+
+                  className="task-item"
+
+                  > {
+                    task.title
+                  }
+
+                  </li>)
+              }
+
+              </Draggable>))
+        }
+
+          {
+          provided.placeholder
+        }
+
+        </ul>)
+    }
+
+    </Droppable> </DragDropContext> </div>);
+}
+
+;
+
+export default TaskList;
+
+// File: src/redux/slices/tasksSlice.js
+import {
+  createSlice
+}
+
+from '@reduxjs/toolkit';
+
+const tasksSlice=createSlice({
+
+  name: 'tasks',
+  initialState: {
+    items: [ {
+      id: '1', title: 'Design dashboard layout'
+    }
+
+    ,
+    {
+    id: '2', title: 'Implement drag and drop'
+  }
+
+  ,
+  {
+  id: '3', title: 'Write documentation'
+}
+
+,
+],
+}
+
+,
+reducers: {
+  reorderTasks: (state, action)=> {
+    state.items=action.payload;
+  }
+
+  ,
+}
+
+,
+});
+
+export const {
+  reorderTasks
+}
+
+=tasksSlice.actions;
+export default tasksSlice.reducer;
+
+// File: src/styles/TaskList.css
+.task-list-container {
+  padding: 1rem;
+  background: #f4f4f4;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: auto;
+}
+
+.task-list-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-item {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: grab;
+  transition: background 0.2s;
+}
+
+.task-item:active {
+  cursor: grabbing;
+  background: #eaeaea;
+}
+
+
+// File: src/components/CalendarView.jsx
+import React,
+{
+useState
+}
+
+from 'react';
+
+import {
+  useSelector,
+  useDispatch
+}
+
+from 'react-redux';
+
+import {
+  moveEvent
+}
+
+from '../redux/slices/eventsSlice';
+import '../styles/CalendarView.css';
+
+const CalendarView=()=> {
+  const events=useSelector((state)=> state.events.items);
+  const dispatch=useDispatch();
+  const [draggedEvent,
+  setDraggedEvent]=useState(null);
+
+  const handleDragStart=(event)=> {
+    setDraggedEvent(event);
+  }
+
+  ;
+
+  const handleDrop=(date)=> {
+    if (draggedEvent) {
+      dispatch(moveEvent({
+          id: draggedEvent.id, newDate: date
+        }));
+    setDraggedEvent(null);
+  }
+}
+
+;
+
+const dates=['2025-04-14',
+'2025-04-15',
+'2025-04-16'];
+
+return (<div className="calendar-view" > {
+    dates.map((date)=> (<div key= {
+          date
+        }
+
+        className="calendar-day"
+
+        onDragOver= {
+          (e)=> e.preventDefault()
+        }
+
+        onDrop= {
+          ()=> handleDrop(date)
+        }
+
+        > <h4> {
+          date
+        }
+
+        </h4> {
+          events.filter((e)=> e.date===date).map((event)=> (<div key= {
+                event.id
+              }
+
+              className="calendar-event"
+
+              draggable onDragStart= {
+                ()=> handleDragStart(event)
+              }
+
+              > {
+                event.title
+              }
+
+              </div>))
+        }
+
+        </div>))
+  }
+
+  </div>);
+}
+
+;
+
+export default CalendarView;
+
+
+// File: src/redux/slices/eventsSlice.js
+import {
+  createSlice
+}
+
+from '@reduxjs/toolkit';
+
+const eventsSlice=createSlice({
+
+  name: 'events',
+  initialState: {
+    items: [ {
+      id: 'e1', title: 'Team sync', date: '2025-04-14'
+    }
+
+    ,
+    {
+    id: 'e2', title: 'Release review', date: '2025-04-15'
+  }
+
+  ,
+  ],
+}
+
+,
+reducers: {
+  moveEvent: (state, action)=> {
+    const event=state.items.find((e)=> e.id===action.payload.id);
+    if (event) event.date=action.payload.newDate;
+  }
+
+  ,
+}
+
+,
+});
+
+export const {
+  moveEvent
+}
+
+=eventsSlice.actions;
+export default eventsSlice.reducer;
+
+
+// File: src/styles/CalendarView.css
+.calendar-view {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.calendar-day {
+  flex: 1;
+  background: #fdfdfd;
+  border: 1px solid #ddd;
+  padding: 1rem;
+  border-radius: 8px;
+  min-height: 200px;
+}
+
+.calendar-event {
+  padding: 0.5rem;
+  background: #aee;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  cursor: grab;
+} */
+
+
+
+/*
+// Project: Advanced Task Planner (React + Redux + Vite + Pure CSS)
+
+// File: src/components/TaskList.jsx
+import React from 'react';
+
+import {
+  DragDropContext,
+  Droppable,
+  Draggable
+}
+
+from 'react-beautiful-dnd';
+
+import {
+  useSelector,
+  useDispatch
+}
+
+from 'react-redux';
+
+import {
+  reorderTasks
+}
+
+from '../redux/slices/tasksSlice';
+import '../styles/TaskList.css';
+
+const TaskList=()=> {
+  const tasks=useSelector((state)=> state.tasks.items);
+  const dispatch=useDispatch();
+
+  const onDragEnd=(result)=> {
+    if ( !result.destination) return;
+    const reordered=Array.from(tasks);
+    const [moved]=reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, moved);
+    dispatch(reorderTasks(reordered));
+  }
+
+  ;
+
+  return (<div className="task-list-container" > <h2 className="task-list-title" >Tasks</h2> <DragDropContext onDragEnd= {
+      onDragEnd
+    }
+
+    > <Droppable droppableId="tasks" > {
+      (provided)=> (<ul {
+          ...provided.droppableProps
+        }
+
+        ref= {
+          provided.innerRef
+        }
+
+        className="task-list" > {
+          tasks.map((task, index)=> (<Draggable key= {
+                task.id
+              }
+
+              draggableId= {
+                task.id
+              }
+
+              index= {
+                index
+              }
+
+              > {
+                (provided)=> (<li ref= {
+                    provided.innerRef
+                  }
+
+                    {
+                    ...provided.draggableProps
+                  }
+
+                    {
+                    ...provided.dragHandleProps
+                  }
+
+                  className="task-item"
+
+                  > {
+                    task.title
+                  }
+
+                  </li>)
+              }
+
+              </Draggable>))
+        }
+
+          {
+          provided.placeholder
+        }
+
+        </ul>)
+    }
+
+    </Droppable> </DragDropContext> </div>);
+}
+
+;
+
+export default TaskList;
+
+// File: src/redux/slices/tasksSlice.js
+import {
+  createSlice
+}
+
+from '@reduxjs/toolkit';
+
+const tasksSlice=createSlice({
+
+  name: 'tasks',
+  initialState: {
+    items: [ {
+      id: '1', title: 'Design dashboard layout'
+    }
+
+    ,
+    {
+    id: '2', title: 'Implement drag and drop'
+  }
+
+  ,
+  {
+  id: '3', title: 'Write documentation'
+}
+
+,
+],
+}
+
+,
+reducers: {
+  reorderTasks: (state, action)=> {
+    state.items=action.payload;
+  }
+
+  ,
+}
+
+,
+});
+
+export const {
+  reorderTasks
+}
+
+=tasksSlice.actions;
+export default tasksSlice.reducer;
+
+// File: src/styles/TaskList.css
+.task-list-container {
+  padding: 1rem;
+  background: #f4f4f4;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: auto;
+}
+
+.task-list-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-item {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: grab;
+  transition: background 0.2s;
+}
+
+.task-item:active {
+  cursor: grabbing;
+  background: #eaeaea;
+}
+
+// File: src/components/CalendarView.jsx
+import React,
+{
+useState
+}
+
+from 'react';
+
+import {
+  useSelector,
+  useDispatch
+}
+
+from 'react-redux';
+
+import {
+  moveEvent
+}
+
+from '../redux/slices/eventsSlice';
+import '../styles/CalendarView.css';
+
+const CalendarView=()=> {
+  const events=useSelector((state)=> state.events.items);
+  const dispatch=useDispatch();
+  const [draggedEvent,
+  setDraggedEvent]=useState(null);
+
+  const handleDragStart=(event)=> {
+    setDraggedEvent(event);
+  }
+
+  ;
+
+  const handleDrop=(date)=> {
+    if (draggedEvent) {
+      dispatch(moveEvent({
+          id: draggedEvent.id, newDate: date
+        }));
+    setDraggedEvent(null);
+  }
+}
+
+;
+
+const dates=['2025-04-14',
+'2025-04-15',
+'2025-04-16'];
+
+return (<div className="calendar-view" > {
+    dates.map((date)=> (<div key= {
+          date
+        }
+
+        className="calendar-day"
+
+        onDragOver= {
+          (e)=> e.preventDefault()
+        }
+
+        onDrop= {
+          ()=> handleDrop(date)
+        }
+
+        > <h4> {
+          date
+        }
+
+        </h4> {
+          events.filter((e)=> e.date===date).map((event)=> (<div key= {
+                event.id
+              }
+
+              className="calendar-event"
+
+              draggable onDragStart= {
+                ()=> handleDragStart(event)
+              }
+
+              > {
+                event.title
+              }
+
+              </div>))
+        }
+
+        </div>))
+  }
+
+  </div>);
+}
+
+;
+
+export default CalendarView;
+
+// File: src/redux/slices/eventsSlice.js
+import {
+  createSlice
+}
+
+from '@reduxjs/toolkit';
+
+const eventsSlice=createSlice({
+
+  name: 'events',
+  initialState: {
+    items: [ {
+      id: 'e1', title: 'Team sync', date: '2025-04-14'
+    }
+
+    ,
+    {
+    id: 'e2', title: 'Release review', date: '2025-04-15'
+  }
+
+  ,
+  ],
+}
+
+,
+reducers: {
+  moveEvent: (state, action)=> {
+    const event=state.items.find((e)=> e.id===action.payload.id);
+    if (event) event.date=action.payload.newDate;
+  }
+
+  ,
+}
+
+,
+});
+
+export const {
+  moveEvent
+}
+
+=eventsSlice.actions;
+export default eventsSlice.reducer;
+
+// File: src/styles/CalendarView.css
+.calendar-view {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.calendar-day {
+  flex: 1;
+  background: #fdfdfd;
+  border: 1px solid #ddd;
+  padding: 1rem;
+  border-radius: 8px;
+  min-height: 200px;
+}
+
+.calendar-event {
+  padding: 0.5rem;
+  background: #aee;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  cursor: grab;
+}
+
+// File: src/components/GoalList.jsx
+import React from 'react';
+
+import {
+  useSelector
+}
+
+from 'react-redux';
+import '../styles/GoalList.css';
+
+const GoalList=()=> {
+  const goals=useSelector((state)=> state.goals.items);
+
+  return (<div className="goal-list-container" > <h2 className="goal-list-title" >Goals</h2> <ul className="goal-list" > {
+      goals.map((goal)=> (<li key= {
+            goal.id
+          }
+
+          className="goal-item" > {
+            goal.title
+          }
+
+          </li>))
+    }
+
+    </ul> </div>);
+}
+
+;
+
+export default GoalList;
+
+// File: src/styles/GoalList.css
+.goal-list-container {
+  padding: 1rem;
+  background: #f5f5ff;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: auto;
+}
+
+.goal-list-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.goal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.goal-item {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  font-weight: 500;
+}
+  */
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+* {
+  box-sizing: border-box;
+}

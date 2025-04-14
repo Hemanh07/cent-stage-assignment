@@ -1,0 +1,43 @@
+
+.goal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.goal-item {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.goal-item:hover {
+  background-color: #e5e7eb;
+}
+
+.goal-item.active {
+  border-color: #3b82f6;
+  background-color: #dbeafe;
+}
+
+.goal-header {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.goal-progress {
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.goal-progress-bar {
+  height: 100%;
+  background-color: #3b82f6;
+  transition: width 0.3s ease;
+}
