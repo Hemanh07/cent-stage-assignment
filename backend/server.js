@@ -13,10 +13,13 @@ app.use(express.json());
 
 // Connect to MongoDB
 mongoose
-  .connect("mongodb+srv://hemanth07:<db_password>@crazydeveloper.rfqd37s.mongodb.net/?retryWrites=true&w=majority&appName=CrazyDeveloper/calendar-app", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(
+    "mongodb+srv://crazydeveloperr007:kitkat112@cluster0.uwqknwm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
