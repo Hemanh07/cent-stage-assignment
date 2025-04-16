@@ -13,7 +13,7 @@ app.use(express.json());
 
 // Connect to MongoDB
 mongoose
-  .connect("mongodb://localhost:27017/calendar-app", {
+  .connect("mongodb+srv://hemanth07:<db_password>@crazydeveloper.rfqd37s.mongodb.net/?retryWrites=true&w=majority&appName=CrazyDeveloper/calendar-app", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
