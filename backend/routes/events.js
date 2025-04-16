@@ -51,7 +51,7 @@ router.put("/:id", async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
-router.post("/from-task", createEventFromTask);
+
 // DELETE event
 router.delete("/:id", async (req, res) => {
   try {

@@ -1,83 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { addEvent, updateEvent, deleteEvent } from '../redux/eventsSlice';
-import { v4 as uuidv4 } from 'uuid';
 import '../styles/EventModal.css';
 
-const EventModal = ({ isOpen, onClose, event, date, timeSlot }) => {
+const EventModal = ({ isOpen, onClose, event, slotInfo }) => {
     const dispatch = useDispatch();
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('work');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
 
+    const categories = ['exercise', 'eating', 'work', 'relax', 'family', 'social'];
+
     useEffect(() => {
         if (event) {
             setTitle(event.title);
-            setCategory(event.category || 'work');
-            setStartTime(formatTimeForInput(new Date(event.start)));
-            setEndTime(formatTimeForInput(new Date(event.end)));
-        } else if (timeSlot) {
-            // Set default start time to the clicked time slot
-            setStartTime(formatTimeForInput(timeSlot));
-
-            // Set default end time to 1 hour after start time
-            const defaultEndTime = new Date(timeSlot);
-            defaultEndTime.setHours(defaultEndTime.getHours() + 1);
-            setEndTime(formatTimeForInput(defaultEndTime));
+            setCategory(event.category);
+            setStartTime(formatDateToDateTime(new Date(event.start)));
+            setEndTime(formatDateToDateTime(new Date(event.end)));
+        } else if (slotInfo) {
+            setStartTime(formatDateToDateTime(slotInfo.start));
+            setEndTime(formatDateToDateTime(slotInfo.end));
         }
-    }, [event, timeSlot]);
+    }, [event, slotInfo]);
 
-    const formatTimeForInput = (dateTime) => {
-        const hours = dateTime.getHours().toString().padStart(2, '0');
-        const minutes = dateTime.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
-    };
+    const formatDateToDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
 
-    const parseTimeInput = (timeString, dateObj) => {
-        const [hours, minutes] = timeString.split(':').map(Number);
-        const newDate = new Date(dateObj);
-        newDate.setHours(hours, minutes, 0, 0);
-        return newDate;
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!title.trim()) {
-            alert('Please enter a title for the event');
-            return;
-        }
-
-        const startDateTime = parseTimeInput(startTime, date);
-        const endDateTime = parseTimeInput(endTime, date);
-
-        if (startDateTime >= endDateTime) {
-            alert('End time must be after start time');
-            return;
-        }
-
         const eventData = {
             title,
             category,
-            start: startDateTime,
-            end: endDateTime
+            start: new Date(startTime),
+            end: new Date(endTime)
         };
 
         if (event) {
-            // Update existing event
-            dispatch(updateEvent({ id: event.id, ...eventData }));
+            dispatch(updateEvent({ id: event._id, ...eventData }));
         } else {
-            // Create new event
-            dispatch(addEvent({ id: uuidv4(), ...eventData }));
+            dispatch(addEvent(eventData));
         }
 
         onClose();
     };
 
     const handleDelete = () => {
-        if (event && window.confirm('Are you sure you want to delete this event?')) {
-            dispatch(deleteEvent(event.id));
+        if (event && event._id) {
+            dispatch(deleteEvent(event._id));
             onClose();
         }
     };
@@ -86,20 +64,17 @@ const EventModal = ({ isOpen, onClose, event, date, timeSlot }) => {
 
     return (
         <div className="modal-overlay">
-            <div className="modal-container">
-                <div className="modal-header">
-                    <h2>{event ? 'Edit Event' : 'Create New Event'}</h2>
-                    <button className="close-button" onClick={onClose}>×</button>
-                </div>
+            <div className="modal-content">
+                <h2>{event ? 'Edit Event' : 'Create New Event'}</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label htmlFor="title">Title</label>
                         <input
                             type="text"
                             id="title"
-                            placeholder="Event title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Event title"
                             required
                         />
                     </div>
@@ -110,54 +85,40 @@ const EventModal = ({ isOpen, onClose, event, date, timeSlot }) => {
                             id="category"
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
+                            required
                         >
-                            <option value="exercise">Exercise</option>
-                            <option value="eating">Eating</option>
-                            <option value="work">Work</option>
-                            <option value="relax">Relax</option>
-                            <option value="family">Family</option>
-                            <option value="social">Social</option>
+                            {categories.map(cat => (
+                                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                            ))}
                         </select>
                     </div>
 
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="start-time">Start Time</label>
-                            <input
-                                type="time"
-                                id="start-time"
-                                value={startTime}
-                                onChange={(e) => setStartTime(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="end-time">End Time</label>
-                            <input
-                                type="time"
-                                id="end-time"
-                                value={endTime}
-                                onChange={(e) => setEndTime(e.target.value)}
-                                required
-                            />
-                        </div>
+                    <div className="form-group">
+                        <label htmlFor="startTime">Start Time</label>
+                        <input
+                            type="datetime-local"
+                            id="startTime"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            required
+                        />
                     </div>
 
-                    <div className="button-group">
-                        {event && (
-                            <button
-                                type="button"
-                                className="delete-button"
-                                onClick={handleDelete}
-                            >
-                                Delete
-                            </button>
-                        )}
-                        <button type="button" className="cancel-button" onClick={onClose}>Cancel</button>
-                        <button type="submit" className="submit-button">
-                            {event ? 'Update Event' : 'Create Event'}
-                        </button>
+                    <div className="form-group">
+                        <label htmlFor="endTime">End Time</label>
+                        <input
+                            type="datetime-local"
+                            id="endTime"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="modal-buttons">
+                        <button type="button" onClick={onClose}>Cancel</button>
+                        {event && <button type="button" className="delete-btn" onClick={handleDelete}>Delete</button>}
+                        <button type="submit" className="create-btn">{event ? 'Update' : 'Create'} Event</button>
                     </div>
                 </form>
             </div>

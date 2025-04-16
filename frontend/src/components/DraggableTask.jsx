@@ -1,33 +1,20 @@
+// /src/components/DraggableTask.js
 import React from 'react';
-import { useDrag } from 'react-dnd';
-import './styles/TaskList.css';
 
-const DraggableTask = ({ task, goalColor }) => {
-    const [{ isDragging }, drag] = useDrag({
-        type: 'TASK',
-        item: { task, goalColor },
-        collect: (monitor) => ({
-            isDragging: monitor.isDragging()
-        })
-    });
+const DraggableTask = ({ task, color }) => {
+    const handleDragStart = (e) => {
+        e.dataTransfer.setData('task', JSON.stringify(task));
+    };
 
     return (
-        <div
-            ref={drag}
-            className="task-item"
-            style={{
-                opacity: isDragging ? 0.5 : 1,
-                cursor: 'move',
-                borderLeft: `4px solid ${goalColor || '#808080'}`,
-                marginBottom: '8px',
-                padding: '8px',
-                backgroundColor: 'white',
-                borderRadius: '4px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
-            }}
+        <li
+            draggable
+            onDragStart={handleDragStart}
+            className="p-2 rounded mb-2 bg-white shadow cursor-grab"
+            style={{ borderLeft: `5px solid ${color}` }}
         >
             {task.name}
-        </div>
+        </li>
     );
 };
 

@@ -1,170 +1,121 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { fetchEventsApi, createEventApi, updateEventApi, deleteEventApi } from '../api/api';
 
-// Create axios instance with base URL
-const api = axios.create({
-    baseURL: 'http://localhost:5000'
-});
-
-// Async thunk for fetching events
 export const fetchEvents = createAsyncThunk(
     'events/fetchEvents',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await api.get('/api/events');
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response.data);
-        }
+    async () => {
+        const response = await fetchEventsApi();
+        return response;
     }
 );
 
-// Async thunk for adding an event
 export const addEvent = createAsyncThunk(
     'events/addEvent',
-    async (eventData, { rejectWithValue }) => {
-        try {
-            const response = await api.post('/api/events', {
-                title: eventData.title,
-                category: eventData.category,
-                startTime: eventData.start,
-                endTime: eventData.end,
-                color: eventData.color
-            });
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response.data);
-        }
+    async (eventData) => {
+        const response = await createEventApi(eventData);
+        return response;
     }
 );
 
-// Async thunk for creating an event from a task
-export const createEventFromTask = createAsyncThunk(
-    'events/createEventFromTask',
-    async (taskData, { rejectWithValue }) => {
-        try {
-            const response = await api.post('/api/events/from-task', {
-                taskId: taskData.id || taskData._id,
-                title: taskData.title,
-                category: taskData.category || 'work',
-                startTime: taskData.scheduledDate || taskData.dueDate,
-                duration: taskData.estimatedTime || 60 // default 60 minutes if not specified
-            });
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response.data);
-        }
-    }
-);
-
-// Async thunk for updating an event
 export const updateEvent = createAsyncThunk(
     'events/updateEvent',
-    async ({ id, ...eventData }, { rejectWithValue }) => {
-        try {
-            const response = await api.put(`/api/events/${id}`, {
-                title: eventData.title,
-                category: eventData.category,
-                startTime: eventData.start,
-                endTime: eventData.end,
-                color: eventData.color
-            });
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response.data);
-        }
+    async ({ id, ...eventData }) => {
+        const response = await updateEventApi(id, eventData);
+        return response;
     }
 );
 
-// Async thunk for deleting an event
 export const deleteEvent = createAsyncThunk(
     'events/deleteEvent',
-    async (id, { rejectWithValue }) => {
-        try {
-            await api.delete(`/api/events/${id}`);
-            return id;
-        } catch (error) {
-            return rejectWithValue(error.response.data);
-        }
+    async (id) => {
+        await deleteEventApi(id);
+        return id;
     }
 );
 
-const eventsSlice = createSlice({
+export const moveEvent = createAsyncThunk(
+    'events/moveEvent',
+    async ({ id, start, end }) => {
+        const response = await updateEventApi(id, { start, end });
+        return response;
+    }
+);
+
+export const createEventFromTask = createAsyncThunk(
+    'events/createEventFromTask',
+    async ({ taskName, date, time, goalColor }) => {
+        const start = new Date(date);
+        start.setHours(time.getHours(), time.getMinutes());
+
+        const end = new Date(start);
+        end.setHours(end.getHours() + 1); // Default 1 hour event
+
+        const eventData = {
+            title: taskName,
+            category: taskName, // Using task name as category for color association
+            start,
+            end
+        };
+
+        const response = await createEventApi(eventData);
+        return response;
+    }
+);
+
+const eventSlice = createSlice({
     name: 'events',
     initialState: {
         events: [],
-        loading: false,
+        status: 'idle',
         error: null
     },
-    reducers: {
-        // For optimistic updates
-        moveEvent: (state, action) => {
-            const { id, start, end } = action.payload;
-            const eventIndex = state.events.findIndex(
-                event => (event._id && event._id === id) || (event.id && event.id === id)
-            );
-
-            if (eventIndex !== -1) {
-                state.events[eventIndex].start = start;
-                state.events[eventIndex].end = end;
-            }
-        }
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder
             // Fetch events
             .addCase(fetchEvents.pending, (state) => {
-                state.loading = true;
-                state.error = null;
+                state.status = 'loading';
             })
             .addCase(fetchEvents.fulfilled, (state, action) => {
+                state.status = 'succeeded';
                 state.events = action.payload;
-                state.loading = false;
             })
             .addCase(fetchEvents.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
+                state.status = 'failed';
+                state.error = action.error.message;
             })
+
             // Add event
             .addCase(addEvent.fulfilled, (state, action) => {
                 state.events.push(action.payload);
             })
+
+            // Update event
+            .addCase(updateEvent.fulfilled, (state, action) => {
+                const index = state.events.findIndex(event => event._id === action.payload._id);
+                if (index !== -1) {
+                    state.events[index] = action.payload;
+                }
+            })
+
+            // Delete event
+            .addCase(deleteEvent.fulfilled, (state, action) => {
+                state.events = state.events.filter(event => event._id !== action.payload);
+            })
+
+            // Move event
+            .addCase(moveEvent.fulfilled, (state, action) => {
+                const index = state.events.findIndex(event => event._id === action.payload._id);
+                if (index !== -1) {
+                    state.events[index] = action.payload;
+                }
+            })
+
             // Create event from task
             .addCase(createEventFromTask.fulfilled, (state, action) => {
                 state.events.push(action.payload);
-            })
-            // Update event
-            .addCase(updateEvent.fulfilled, (state, action) => {
-                const updatedEvent = action.payload;
-                const index = state.events.findIndex(
-                    event => (event._id && event._id === updatedEvent._id) ||
-                        (event.id && event.id === updatedEvent.id)
-                );
-
-                if (index !== -1) {
-                    state.events[index] = updatedEvent;
-                }
-            })
-            // Delete event
-            .addCase(deleteEvent.fulfilled, (state, action) => {
-                const id = action.payload;
-                state.events = state.events.filter(
-                    event => (event._id !== id) && (event.id !== id)
-                );
             });
     }
 });
 
-export const { moveEvent } = eventsSlice.actions;
-export default eventsSlice.reducer;
-
-// Middleware to connect the moveEvent action with the updateEvent thunk
-export const eventMiddleware = store => next => action => {
-    const result = next(action);
-
-    if (action.type === 'events/moveEvent') {
-        store.dispatch(updateEvent(action.payload));
-    }
-
-    return result;
-};
+export default eventSlice.reducer;

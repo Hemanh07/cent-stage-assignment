@@ -1,40 +1,32 @@
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import TaskList from './TaskList';
+import '../styles/components.css';
 import '../styles/GoalList.css';
 
-const GoalList = () => {
-    const { goals } = useSelector(state => state.goals);
-    const [expandedGoal, setExpandedGoal] = useState(null);
+// /src/components/GoalList.js
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectGoal } from '../redux/goalsSlice';
 
-    const toggleGoal = (goalId) => {
-        if (expandedGoal === goalId) {
-            setExpandedGoal(null);
-        } else {
-            setExpandedGoal(goalId);
-        }
+const GoalList = () => {
+    const dispatch = useDispatch();
+    const { data: goals, selectedGoalId } = useSelector(state => state.goals);
+
+    const handleClick = (goalId) => {
+        dispatch(selectGoal(goalId));
     };
 
     return (
-        <div className="goal-list-container">
-            <h3>GOALS</h3>
-            <ul className="goal-list">
-                {goals.map(goal => (
-                    <li key={goal._id}>
-                        <div
-                            className={`goal-item ${expandedGoal === goal._id ? 'expanded' : ''}`}
-                            onClick={() => toggleGoal(goal._id)}
-                            style={{ borderLeft: `4px solid ${goal.color}` }}
-                        >
-                            {goal.name}
-                        </div>
-                        {expandedGoal === goal._id && (
-                            <TaskList goalId={goal._id} />
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </div>
+        <ul>
+            {goals.map(goal => (
+                <li
+                    key={goal._id}
+                    className={`p-2 rounded cursor-pointer mb-2 border ${selectedGoalId === goal._id ? 'bg-blue-100' : 'bg-gray-100'}`}
+                    style={{ borderLeft: `5px solid ${goal.color}` }}
+                    onClick={() => handleClick(goal._id)}
+                >
+                    {goal.name}
+                </li>
+            ))}
+        </ul>
     );
 };
 

@@ -1,47 +1,21 @@
-import React, { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchTasks } from '../redux/tasksSlice';
-import { fetchGoals } from '../redux/goalsSlice';
+// /src/components/TaskList.js
+import React from 'react';
+import { useSelector } from 'react-redux';
 import DraggableTask from './DraggableTask';
-import '../styles/TaskList.css';
 
-const TaskList = ({ goalId }) => {
-    const dispatch = useDispatch();
-    const { tasks } = useSelector(state => state.tasks);
-    const { goals } = useSelector(state => state.goals);
+const TaskList = () => {
+    const { data: tasks } = useSelector(state => state.tasks);
+    const { data: goals, selectedGoalId } = useSelector(state => state.goals);
 
-    useEffect(() => {
-        dispatch(fetchTasks());
-        dispatch(fetchGoals());
-    }, [dispatch]);
-
-    // Find the goal that matches the goalId
-    const goal = goals.find(g => g.id === goalId);
-
-    // If we have a goal, filter tasks that belong to this goal
-    // Otherwise return an empty array
-    const goalTasks = goal ? tasks.filter(task => task.goalId === goalId) : [];
+    const selectedGoalTasks = tasks.filter(task => task.goalId === selectedGoalId);
+    const goalColor = goals.find(g => g._id === selectedGoalId)?.color || '#ccc';
 
     return (
-        <div className="task-list">
-            <h3 className="task-list-title" style={{ color: goal ? goal.color : '#333' }}>
-                {goal ? goal.name : 'Tasks'}
-            </h3>
-
-            {goalTasks.length === 0 ? (
-                <p className="no-tasks">No tasks available</p>
-            ) : (
-                <div className="tasks-container">
-                    {goalTasks.map(task => (
-                        <DraggableTask
-                            key={task.id}
-                            task={task}
-                            goalColor={goal?.color}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
+        <ul>
+            {selectedGoalTasks.map(task => (
+                <DraggableTask key={task._id} task={task} color={goalColor} />
+            ))}
+        </ul>
     );
 };
 
